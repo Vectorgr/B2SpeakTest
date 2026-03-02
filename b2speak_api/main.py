@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from b2speak_api.infrastructure.azure_blob_storage import AzureBlobStorage
-from interfaces.api import router
+from b2speak_api.interfaces.api import router
 import asyncio
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
