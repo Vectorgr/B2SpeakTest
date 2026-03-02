@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Prueba de Subida de Imágenes</title>
+</head>
+<body>
+    <h1>Subir audio a la API</h1>
+    <form id="uploadForm" enctype="multipart/form-data">
+        <label for="file">Selecciona una audio:</label>
+        <input type="file" id="file" name="file" accept="image/*" required><br><br>
+        <label for="selected_picture">ID de audio seleccionada:</label>
+        <input type="text" id="selected_picture" name="selected_picture" value="0"><br><br>
+        <label for="user_id">ID de usuario (opcional):</label>
+        <input type="text" id="user_id" name="user_id"><br><br>
+        <button type="submit">Subir</button>
+    </form>
+    <div id="result"></div>
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const formData = new FormData();
+            formData.append('file', document.getElementById('file').files[0]);
+            formData.append('selected_picture', document.getElementById('selected_picture').value);
+            formData.append('user_id', document.getElementById('user_id').value);
+            const response = await fetch('/speak-evaluation', {
+                method: 'POST',
+                body: formData
+            });
+            const resultDiv = document.getElementById('result');
+            if (response.ok) {
+                const data = await response.json();
+                resultDiv.textContent = 'Subida exitosa: ' + JSON.stringify(data);
+            } else {
+                resultDiv.textContent = 'Error en la subida';
+            }
+        });
+    </script>
+</body>
+</html>
