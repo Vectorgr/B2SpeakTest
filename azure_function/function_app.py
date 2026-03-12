@@ -5,6 +5,7 @@ import requests
 import json
 
 from domain.models import SpeakEvaluation
+
 from llm_client import LLMClient
 from db_client import DbClient
 
@@ -18,8 +19,13 @@ app = func.FunctionApp(http_auth_level=func.AuthLevel.FUNCTION)
 #    connection_string=os.environ.get("MONGO_CONNECTION_STRING"),
 #    database_name=os.environ.get("MONGO_DATABASE_NAME")
 #)
-llm_client = LLMClient()
-db_client = DbClient()
+
+def get_db():
+    return DbClient()
+
+def get_llm():
+    return LLMClient()
+
 def transcribe_audio(audio_bytes):
     API_URL = os.environ.get('SPEECH_API_URL')
     API_KEY = os.environ.get('SPEECH_API_KEY')
@@ -40,12 +46,14 @@ def transcribe_audio(audio_bytes):
     return response.json()
 
 async def update_db(blob_name, update_data:dict):
+    db_client = get_db()
     filename = os.path.basename(blob_name)  # archivo.wav
     name, _ = os.path.splitext(filename)
     audio_name = name+".wav"
     logging.warning(f"Updating DB for file: {audio_name} with data: {update_data}")
     speak_eval:SpeakEvaluation = await db_client.findByFileName(audio_name)
     await db_client.update(speak_eval._id, update_data)
+
 
 @app.blob_output(arg_name="outputblob",path="transcriptions/{name}.json",connection="stab2speaking_STORAGE")
 @app.blob_trigger(arg_name="myblob", path="audios/{name}.wav", connection="stab2speaking_STORAGE")
@@ -64,8 +72,10 @@ async def BlobTrigger(myblob: func.InputStream, outputblob: func.Out[str]):
 
 
 
+
 @app.blob_trigger(arg_name="myblob", path="transcriptions/{name}.json", connection="stab2speaking_STORAGE") 
 async def evaluation_function(myblob: func.InputStream):
+    llm_client = get_llm()
     logging.info(f"Python blob trigger function processed blob"
                 f"Name: {myblob.name}"
                 f"Blob Size: {myblob.length} bytes")
