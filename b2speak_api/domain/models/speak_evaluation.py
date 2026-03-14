@@ -19,6 +19,6 @@ class SpeakEvaluationCreate:
     audio_url: str
     audio_name: str
     user_id: str | None = None
-    selected_picture: str = "0"
+    selected_picture: str | None = None
     state: str = "UPLOADING"
     created_at: datetime | None = None
