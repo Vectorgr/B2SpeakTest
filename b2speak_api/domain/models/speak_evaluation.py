@@ -6,7 +6,7 @@ class SpeakEvaluation:
     _id: str
     audio_url: str
     audio_name: str
-    selected_picture: str = "0"
+    selected_picture: str | None = None
     user_id: str | None = None
     state: str | None = None
     transcription: str | None = None
