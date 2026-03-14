@@ -7,7 +7,18 @@ from motor.motor_asyncio import AsyncIOMotorClient
 import os
 
 
-app = FastAPI()
+app = FastAPI(openapi_kwargs={
+        "components": {
+            "securitySchemes": {
+                "BearerAuth": {
+                    "type": "http",
+                    "scheme": "bearer",
+                    "bearerFormat": "JWT"
+                }
+            }
+        },
+        "security": [{"BearerAuth": []}]
+    })
 app.include_router(router)
 
 # Store the storage instance globally for shutdown cleanup
@@ -24,7 +35,8 @@ async def startup():
     app.state.mongo_client = AsyncIOMotorClient(os.getenv("MONGO_URI"))
     app.state.azure_storage = AzureBlobStorage(
         connection_string=os.getenv("AZURE_STORAGE_CONNECTION_STRING"),
-        container_name=os.getenv("AZURE_CONTAINER")
+        container_name_audios=os.getenv("AZURE_CONTAINER_AUDIOS", "audios"),
+        container_name_speaking_images=os.getenv("AZURE_CONTAINER_SPEAKING_IMAGES", "speaking-images")
     )
 
 @app.on_event("shutdown")

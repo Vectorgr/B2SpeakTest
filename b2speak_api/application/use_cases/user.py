@@ -2,8 +2,7 @@ from b2speak_api.domain.models.user import User, UserCreate
 from b2speak_api.domain.repositories.user import UserRepository
 from b2speak_api.infrastructure.auth import get_password_hash
 from b2speak_api.infrastructure.azure_blob_storage import AzureBlobStorage
-from b2speak_api.infrastructure.mongodb_repositories.speak_evaluation import MongoSpeakEvaluationRepository
-from b2speak_api.domain.models.speak_evaluation import SpeakEvaluation, SpeakEvaluationCreate
+
 from datetime import datetime
 import uuid
 
