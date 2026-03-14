@@ -29,6 +29,7 @@ def get_llm():
 def transcribe_audio(audio_bytes):
     API_URL = os.environ.get('SPEECH_API_URL')
     API_KEY = os.environ.get('SPEECH_API_KEY')
+    
     headers = {
         'Accept': 'application/json',
         'Ocp-Apim-Subscription-Key': API_KEY
@@ -39,11 +40,29 @@ def transcribe_audio(audio_bytes):
         "channels": [0]
     }
     files = {
-        'audio': audio_bytes,
+        'audio': ('audio.wav', audio_bytes, 'audio/wav'),
         'definition': (None, json.dumps(definition), 'application/json')
     }
-    response = requests.post(API_URL, headers=headers, files=files)
-    return response.json()
+    response = requests.post(API_URL, headers=headers, files=files, timeout=60)
+
+    try:
+        payload = response.json()
+    except ValueError:
+        body_preview = (response.text or "")[:500]
+        logging.error(
+            "Speech API returned non-JSON body (status=%s): %s",
+            response.status_code,
+            body_preview
+        )
+        response.raise_for_status()
+        raise RuntimeError("Speech API returned an empty or non-JSON response")
+
+    if not response.ok:
+        logging.error("Speech API error payload: %s", payload)
+        response.raise_for_status()
+
+    logging.warning("Transcription response: %s", payload)
+    return payload
 
 async def update_db(blob_name, update_data:dict):
     db_client = get_db()
@@ -52,6 +71,9 @@ async def update_db(blob_name, update_data:dict):
     audio_name = name+".wav"
     logging.warning(f"Updating DB for file: {audio_name} with data: {update_data}")
     speak_eval:SpeakEvaluation = await db_client.findByFileName(audio_name)
+    if speak_eval is None:
+        logging.error(f"No SpeakEvaluation found for audio_name={audio_name}. Skipping update.")
+        return
     await db_client.update(speak_eval._id, update_data)
 
 
@@ -66,7 +88,10 @@ async def BlobTrigger(myblob: func.InputStream, outputblob: func.Out[str]):
     logging.info(f"Transcription result: {transcribe_audio_result}")
 
     outputblob.set(json.dumps(transcribe_audio_result, ensure_ascii=False))
-    await update_db(myblob.name, {"state": "TRANSCRIBED", "transcription": transcribe_audio_result["combinedPhrases"]})
+    await update_db(myblob.name, {
+        "state": "TRANSCRIBED",
+        "transcription": transcribe_audio_result.get("combinedPhrases", [])
+    })
 
     logging.info("Transcription stored successfully")
 
