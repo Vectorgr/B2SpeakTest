@@ -1,0 +1,32 @@
+services:
+  b2speak_api:
+    image: b2speaktest
+    container_name: b2speaktest
+    restart: unless-stopped
+    ports:
+      - "8760:8000"
+    depends_on:
+      - mongodb
+    environment:
+      MONGO_DB: ${MONGO_DB:-db_b2speak}
+      MONGO_URI: ${MONGO_URI:-mongodb://admin_usr032:Gato_234395-Astronomia@mongodb:27017/?authSource=admin}
+    networks:
+      - b2speak_net
+
+  mongodb:
+    image: mongodb/mongodb-community-server:latest
+    container_name: mongodb
+    restart: unless-stopped
+    ports:
+      - "8757:27017"
+    volumes:
+      - ./mongodb_data:/data/db
+    environment:
+      MONGODB_INITDB_ROOT_USERNAME: admin_usr032
+      MONGODB_INITDB_ROOT_PASSWORD: Gato_234395-Astronomia
+    networks:
+      - b2speak_net
+
+networks:
+  b2speak_net:
+    driver: bridge
